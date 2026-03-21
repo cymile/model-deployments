@@ -1,11 +1,34 @@
 apiVersion: serving.kserve.io/v1beta1
 kind: InferenceService
 metadata:
-  name: {{ values.modelName }}
-  namespace: {{ values.namespace }}
+  name: bge-m3
+  annotations:
+    serving.kserve.io/autoscalerClass: hpa
 spec:
   predictor:
+    serviceAccountName: mistral
+    minReplicas: 1
+    scaleMetric: cpu
     model:
       modelFormat:
-        name: sklearn
-      storageUri: "{{ values.modelUri }}"
+        name: huggingface
+      args:
+        - --model_name=bge-m3
+        - --backend=huggingface
+        - --task=text_embedding
+        - --dtype=half
+        - --gpu-memory-utilization=0.65
+      env:
+        - name: PYTORCH_CUDA_ALLOC_CONF
+          value: "expandable_segments:True"
+      storageUri: s3://models/bge-m3
+      resources:
+        requests:
+          cpu: "6"
+          memory: "8Gi"
+          nvidia.com/gpu: "1"
+        limits:
+          cpu: "8"
+          memory: "16Gi"
+          nvidia.com/gpu: "1"
+    runtimeClassName: nvidia
