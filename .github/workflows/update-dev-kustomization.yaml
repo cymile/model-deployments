@@ -2,10 +2,12 @@ name: Update dev kustomization
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - 'apps/models/dev/**'
       - 'scripts/generate-dev-kustomization.sh'
+      - '.github/workflows/update-dev-kustomization.yaml'
 
 permissions:
   contents: write
