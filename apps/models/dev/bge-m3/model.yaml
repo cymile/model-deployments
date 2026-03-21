@@ -2,6 +2,7 @@ apiVersion: serving.kserve.io/v1beta1
 kind: InferenceService
 metadata:
   name: bge-m3
+  namespace: kubeflow-user-example-com
   annotations:
     serving.kserve.io/autoscalerClass: hpa
 spec:
