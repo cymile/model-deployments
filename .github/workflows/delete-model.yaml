@@ -20,12 +20,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout main
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Validate input
         run: |
-          if [[ ! "${{ github.event.inputs.model_name }}" =~ ^[a-zA-Z0-9\-]+$ ]]; then
+          if [[ ! "${{ github.event.inputs.model_name }}" =~ ^[a-zA-Z0-9-]+$ ]]; then
             echo "Invalid model name"
             exit 1
           fi
@@ -43,27 +45,12 @@ jobs:
 
           rm -rf "$TARGET"
 
-      - name: Commit changes
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-
-          git checkout -b delete-${{ github.event.inputs.model_name }}
-
-          git add -A
-
-          if git diff --cached --quiet; then
-            echo "Nothing to commit"
-            exit 0
-          fi
-
-          git commit -m "Delete model ${{ github.event.inputs.model_name }}"
-          git push origin delete-${{ github.event.inputs.model_name }}
-
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v8
         with:
-          branch: delete-${{ github.event.inputs.model_name }}
+          commit-message: "Delete model ${{ github.event.inputs.model_name }}"
+          branch: "delete-${{ github.event.inputs.environment }}-${{ github.event.inputs.model_name }}"
+          base: "main"
           title: "Delete model ${{ github.event.inputs.model_name }}"
           body: |
             Delete model folder:
