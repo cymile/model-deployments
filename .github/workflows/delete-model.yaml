@@ -1,0 +1,72 @@
+name: Delete model deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_name:
+        description: "Model folder name (e.g., bge-m3-6)"
+        required: true
+      environment:
+        description: "Environment"
+        required: true
+        default: "dev"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  delete-model:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Validate input
+        run: |
+          if [[ ! "${{ github.event.inputs.model_name }}" =~ ^[a-zA-Z0-9\-]+$ ]]; then
+            echo "Invalid model name"
+            exit 1
+          fi
+
+      - name: Delete model folder
+        run: |
+          MODEL="${{ github.event.inputs.model_name }}"
+          ENV="${{ github.event.inputs.environment }}"
+          TARGET="apps/models/${ENV}/${MODEL}"
+
+          if [ ! -d "$TARGET" ]; then
+            echo "Model folder does not exist: $TARGET"
+            exit 1
+          fi
+
+          rm -rf "$TARGET"
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git checkout -b delete-${{ github.event.inputs.model_name }}
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "Nothing to commit"
+            exit 0
+          fi
+
+          git commit -m "Delete model ${{ github.event.inputs.model_name }}"
+          git push origin delete-${{ github.event.inputs.model_name }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: delete-${{ github.event.inputs.model_name }}
+          title: "Delete model ${{ github.event.inputs.model_name }}"
+          body: |
+            Delete model folder:
+            apps/models/${{ github.event.inputs.environment }}/${{ github.event.inputs.model_name }}
+
+            This will trigger Flux to prune the deployment.
