@@ -22,7 +22,7 @@ spec:
       env:
         - name: PYTORCH_CUDA_ALLOC_CONF
           value: "expandable_segments:True"
-      storageUri: s3://models/bge-m3/
+      storageUri: s3://models/bge-m3
       resources:
         requests:
           cpu: "6"
